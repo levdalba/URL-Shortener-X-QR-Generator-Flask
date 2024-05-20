@@ -25,11 +25,41 @@
         h1 {
             margin-top: 0;
         }
+        form {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        input[type="submit"] {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: #fff;
+            cursor: pointer;
+        }
+        .long-url {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Welcome to the Home Page</h1>
+        <form action="{{ url_for('shorten_url') }}" method="post">
+            <input type="text" name="long_url" placeholder="Enter URL">
+            <input type="submit" value="Submit">
+        </form>
+        {% if long_url %}
+            <div class="long-url">
+                <p>Entered URL: {{ long_url }}</p>
+            </div>
+        {% endif %}
     </div>
 </body>
 </html>
