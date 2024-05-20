@@ -46,11 +46,26 @@
         .long-url {
             margin-top: 20px;
         }
+        .flash-message {
+            background-color: #ffcccc;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to the Home Page</h1>
+        <h1>Paste the URL to be shortened</h1>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for message in messages %}
+                        <div class="flash-message">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
         <form action="{{ url_for('shorten_url') }}" method="post">
             <input type="text" name="long_url" placeholder="Enter URL">
             <input type="submit" value="Submit">
