@@ -1,97 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home Page</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        .top-right {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-        }
-        .flash-message {
-            background-color: #ffcccc;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 5px;
-        }
-        .greeting {
-            margin-top: 20px;
-        }
-        .url-box {
-            margin-top: 20px;
-            text-align: center;
-        }
-        .url-input {
-            width: 300px;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .url-submit {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            background-color: #28a745;
-            color: #fff;
-            cursor: pointer;
-        }
-        .url-submit:hover {
-            background-color: #218838;
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="top-right">
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="absolute top-4 right-4 space-x-2">
         {% if 'username' in session %}
-            <a href="{{ url_for('logout') }}"><button>Logout</button></a>
+        <a href="{{ url_for('logout') }}"><button class="px-4 py-2 bg-red-500 text-white rounded">Logout</button></a>
         {% else %}
-            <a href="{{ url_for('login') }}"><button>Login</button></a>
-            <a href="{{ url_for('signup') }}"><button>Sign Up</button></a>
+        <a href="{{ url_for('login') }}"><button class="px-4 py-2 bg-blue-500 text-white rounded">Login</button></a>
+        <a href="{{ url_for('signup') }}"><button class="px-4 py-2 bg-green-500 text-white rounded">Sign Up</button></a>
         {% endif %}
     </div>
-    <div class="container">
-        <h1>Welcome to the Home Page</h1>
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for message in messages %}
-                        <div class="flash-message">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
+    <div class="bg-white p-8 rounded shadow-md text-center">
+        <h1 class="text-2xl font-bold mb-4">Welcome to the Home Page</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="mb-4 space-y-2">
+            {% for category, message in messages %}
+            <div
+                class="{% if category == 'success' %}bg-green-200{% else %}bg-red-200{% endif %} text-black p-2 rounded">
+                {{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
         {% endwith %}
         {% if 'username' in session %}
-            <p class="greeting">Hello, {{ session['username'] }}!</p>
+        <p class="text-lg mb-4">Hello, {{ session['username'] }}!</p>
         {% else %}
-            <p class="greeting">Please log in or sign up.</p>
+        <p class="text-lg mb-4">Please log in or sign up.</p>
         {% endif %}
-        <div class="url-box">
+        <div class="mt-4">
             <form action="{{ url_for('shorten_url') }}" method="post">
-                <input type="text" name="long_url" class="url-input" placeholder="Enter URL">
-                <br>
-                <input type="submit" value="Shorten URL" class="url-submit">
+                <input type="text" name="long_url" class="w-full p-2 border border-gray-300 rounded mb-4"
+                    placeholder="Enter URL" required>
+                <input type="submit" value="Shorten URL"
+                    class="px-4 py-2 bg-green-500 text-white rounded cursor-pointer">
             </form>
         </div>
     </div>
 </body>
+
 </html>

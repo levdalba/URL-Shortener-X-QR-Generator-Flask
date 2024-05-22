@@ -1,78 +1,36 @@
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-
-# Create a new figure and axis
-fig, ax = plt.subplots(figsize=(10, 6))
-
-
-# Function to add a text box with an arrow
-def add_box(ax, text, xy, width=1.8, height=1, text_offset=(0.5, 0.5)):
-    rect = patches.FancyBboxPatch(
-        (xy[0] - width / 2, xy[1] - height / 2),
-        width,
-        height,
-        boxstyle="round,pad=0.3",
-        edgecolor="black",
-        facecolor="lightgrey",
-    )
-    ax.add_patch(rect)
-    ax.text(xy[0], xy[1], text, ha="center", va="center", fontsize=10)
-
-
-# Add client-side (browser) box
-add_box(ax, "Browser\n(Client)", (1, 2.5))
-
-# Add Flask server box
-add_box(ax, "Flask Server", (4, 2.5))
-
-# Add arrows to indicate flow
-arrowprops = dict(facecolor="black", arrowstyle="->")
-
-# Arrow from Browser to Flask Server
-ax.annotate("", xy=(2.5, 2.5), xytext=(1.8, 2.5), arrowprops=arrowprops)
-ax.text(2.15, 2.65, "Send URL", fontsize=9, ha="center")
-
-# Arrow from Flask Server to Browser
-ax.annotate("", xy=(1.8, 2), xytext=(2.5, 2), arrowprops=arrowprops)
-ax.text(2.15, 1.85, "Receive Short URL", fontsize=9, ha="center")
-
-# Set limits and remove axes
-ax.set_xlim(0, 6)
-ax.set_ylim(1, 4)
-ax.axis("off")
-
-# Display the diagram
-plt.show()
-from flask import Flask, render_template, request, flash, redirect, url_for, session
-from urllib.parse import urlparse
-from werkzeug.security import generate_password_hash, check_password_hash
+import string
+import random
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+import re
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
-
-class UserRepo:
-    def __init__(self):
-        self.users = {}
-        self.id_counter = 1
-
-    def add_user(self, username, password):
-        if username in self.users:
-            return False
-        user_id = self.id_counter
-        self.users[username] = {
-            "id": user_id,
-            "username": username,
-            "password": generate_password_hash(password),
-        }
-        self.id_counter += 1
-        return True
-
-    def get_user(self, username):
-        return self.users.get(username)
+# In-memory databases to store user credentials and URL mappings
+users = {}
+url_mapping = {}
 
 
-user_repo = UserRepo()
+def generate_short_url():
+    """Generate a random string of 6 characters prefixed with 'fatnik'."""
+    prefix = "fatnik"
+    suffix = "".join(random.choices(string.ascii_letters + string.digits, k=6))
+    return prefix + suffix
+
+
+def is_valid_url(url):
+    """Simple URL validation."""
+    regex = re.compile(
+        r"^(?:http|ftp)s?://"  # http:// or https://
+        r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|"  # domain...
+        r"localhost|"  # localhost...
+        r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|"  # ...or ipv4
+        r"\[?[A-F0-9]*:[A-F0-9:]+\]?)"  # ...or ipv6
+        r"(?::\d+)?"  # optional port
+        r"(?:/?|[/?]\S+)$",
+        re.IGNORECASE,
+    )
+    return re.match(regex, url) is not None
 
 
 @app.route("/")
@@ -85,11 +43,12 @@ def signup():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        if user_repo.add_user(username, password):
-            flash("User created successfully, please login")
-            return redirect(url_for("login"))
+        if username in users:
+            flash("Username already exists.", "error")
         else:
-            flash("Username already exists")
+            users[username] = password
+            flash("Signup successful! Please login.", "success")
+            return redirect(url_for("login"))
     return render_template("signup.html")
 
 
@@ -98,42 +57,49 @@ def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        user = user_repo.get_user(username)
-        if user and check_password_hash(user["password"], password):
-            session["user_id"] = user["id"]
-            session["username"] = user["username"]
+        if username in users and users[username] == password:
+            session["username"] = username
+            flash("Login successful!", "success")
             return redirect(url_for("home"))
         else:
-            flash("Invalid username or password")
+            flash("Invalid username or password.", "error")
     return render_template("login.html")
 
 
 @app.route("/logout")
 def logout():
-    session.pop("user_id", None)
     session.pop("username", None)
-    flash("You have been logged out")
+    flash("You have been logged out.", "success")
     return redirect(url_for("home"))
 
 
-# URL shortener
 @app.route("/shorten_url", methods=["POST"])
 def shorten_url():
-    long_url = request.form["long_url"]
-    if is_valid_url(long_url):
-        return render_template("home.html", long_url=long_url)
+    if "username" not in session:
+        flash("Please log in to shorten URLs.", "error")
+        return redirect(url_for("login"))
+
+    long_url = request.form.get("long_url")
+    if long_url:
+        if is_valid_url(long_url):
+            short_url = generate_short_url()
+            url_mapping[short_url] = long_url
+            flash(f"Shortened URL: {request.host_url}{short_url}", "success")
+        else:
+            flash("Invalid URL. Please enter a valid URL.", "error")
     else:
-        flash("Invalid URL")
+        flash("Please enter a URL.", "error")
+    return redirect(url_for("home"))
+
+
+@app.route("/<short_url>")
+def redirect_to_long_url(short_url):
+    long_url = url_mapping.get(short_url)
+    if long_url:
+        return redirect(long_url)
+    else:
+        flash("Invalid URL.", "error")
         return redirect(url_for("home"))
-
-
-# Checker for URL
-def is_valid_url(url):
-    try:
-        result = urlparse(url)
-        return all([result.scheme, result.netloc])
-    except ValueError:
-        return False
 
 
 if __name__ == "__main__":
