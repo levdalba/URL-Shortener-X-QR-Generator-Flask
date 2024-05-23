@@ -9,8 +9,9 @@
 </head>
 
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <a href="{{ url_for('home') }}" class="absolute top-4 right-4"><button
-            class="px-4 py-2 bg-blue-500 text-white rounded">Back to Home</button></a>
+    <a href="{{ url_for('home') }}" class="absolute top-4 right-4">
+        <button class="px-4 py-2 bg-blue-500 text-white rounded">Back to Home</button>
+    </a>
     <div class="bg-white p-8 rounded shadow-md text-center">
         <h1 class="text-2xl font-bold mb-4">Login</h1>
         <form action="{{ url_for('login') }}" method="post" class="space-y-4">
@@ -25,8 +26,9 @@
         <div class="mt-4 space-y-2">
             {% for category, message in messages %}
             <div
-                class="{% if category == 'success' %}bg-green-200{% else %}bg-red-200{% endif %} text-black p-2 rounded">
-                {{ message }}</div>
+                class="{% if category == 'success' %}bg-green-200 text-green-700{% else %}bg-red-200 text-red-700{% endif %} p-2 rounded">
+                {{ message }}
+            </div>
             {% endfor %}
         </div>
         {% endif %}

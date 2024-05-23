@@ -19,15 +19,22 @@
     </div>
     <div class="bg-white p-8 rounded shadow-md text-center">
         <h1 class="text-2xl font-bold mb-4">Welcome to the Home Page</h1>
-        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% with messages = get_flashed_messages() %}
         {% if messages %}
         <div class="mb-4 space-y-2">
-            {% for category, message in messages %}
-            <div
-                class="{% if category == 'success' %}bg-green-200{% else %}bg-red-200{% endif %} text-black p-2 rounded">
-                {{ message }}</div>
+            {% for message in messages %}
+            {% if 'Shortened URL: ' in message %}
+            <div class="bg-green-200 text-green-700 p-2 rounded">{{ message }}</div>
+            {% else %}
+            <div class="bg-red-200 text-red-700 p-2 rounded">{{ message }}</div>
+            {% endif %}
             {% endfor %}
         </div>
+        {% for message in messages %}
+        {% if 'Shortened URL: ' in message %}
+        <input type="hidden" id="short-url-message" value="{{ message.split('Shortened URL: ')[1] }}">
+        {% endif %}
+        {% endfor %}
         {% endif %}
         {% endwith %}
         {% if 'username' in session %}
@@ -43,7 +50,39 @@
                     class="px-4 py-2 bg-green-500 text-white rounded cursor-pointer">
             </form>
         </div>
+        <div id="short-url-container" class="mt-4 hidden">
+            <input type="text" id="short-url" class="w-full p-2 border border-gray-300 rounded mb-4" readonly>
+            <button onclick="copyToClipboard()" class="px-4 py-2 bg-blue-500 text-white rounded cursor-pointer">Copy
+                Shortened URL</button>
+            <p id="copy-message" class="mt-2 text-green-500 hidden">URL copied to clipboard!</p>
+        </div>
     </div>
+    <script>
+        function copyToClipboard() {
+            var copyText = document.getElementById("short-url");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); // For mobile devices
+            document.execCommand("copy");
+
+            var copyMessage = document.getElementById("copy-message");
+            copyMessage.classList.remove("hidden");
+        }
+
+        function displayShortUrl(url) {
+            var shortUrlContainer = document.getElementById("short-url-container");
+            var shortUrlInput = document.getElementById("short-url");
+
+            shortUrlInput.value = url;
+            shortUrlContainer.classList.remove("hidden");
+        }
+
+        window.onload = function () {
+            var shortUrlMessage = document.getElementById("short-url-message");
+            if (shortUrlMessage) {
+                displayShortUrl(shortUrlMessage.value);
+            }
+        }
+    </script>
 </body>
 
 </html>
