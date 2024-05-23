@@ -38,7 +38,9 @@ def is_valid_url(url):
 
 @app.route("/")
 def home():
-    return render_template("home.html")
+    qr_code = session.pop("qr_code", None)
+    shortened_url = session.pop("shortened_url", None)
+    return render_template("home.html", qr_code=qr_code, shortened_url=shortened_url)
 
 
 @app.route("/signup", methods=["GET", "POST"])
@@ -87,7 +89,8 @@ def shorten_url():
         if is_valid_url(long_url):
             short_url = generate_short_url()
             url_mapping[short_url] = long_url
-            flash(f"Shortened URL: {request.host_url}{short_url}", "success")
+            session["shortened_url"] = request.host_url + short_url
+            flash(f"Shortened URL: {session['shortened_url']}", "success")
         else:
             flash("Invalid URL. Please enter a valid URL.", "error")
     else:
@@ -120,10 +123,10 @@ def generate_qr():
     img.save(img_io, "PNG")
     img_io.seek(0)
 
-    # Convert image to base64
     img_base64 = base64.b64encode(img_io.getvalue()).decode("utf-8")
+    session["qr_code"] = img_base64
 
-    return render_template("home.html", qr_code=img_base64)
+    return redirect(url_for("home"))
 
 
 @app.route("/<short_url>")

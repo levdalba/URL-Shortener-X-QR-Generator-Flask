@@ -4,90 +4,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home Page</title>
+    <title>Login Page</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        .hidden {
-            display: none;
-        }
-
-        .button {
-            padding: 20px 40px;
-            font-size: 1.25rem;
-            border: 2px solid #3490dc;
-            border-radius: 10px;
-            background-color: white;
-            color: #3490dc;
-            cursor: pointer;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .button:hover {
-            background-color: #3490dc;
-            color: white;
-        }
-    </style>
 </head>
 
-<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
-    <div class="absolute top-4 right-4 space-x-2">
-        {% if 'username' in session %}
-        <a href="{{ url_for('logout') }}"><button class="px-4 py-2 bg-red-500 text-white rounded">Logout</button></a>
-        {% else %}
-        <a href="{{ url_for('login') }}"><button class="px-4 py-2 bg-blue-500 text-white rounded">Login</button></a>
-        <a href="{{ url_for('signup') }}"><button class="px-4 py-2 bg-green-500 text-white rounded">Sign Up</button></a>
-        {% endif %}
-    </div>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <a href="{{ url_for('home') }}" class="absolute top-4 right-4">
+        <button class="px-4 py-2 bg-blue-500 text-white rounded">Back to Home</button>
+    </a>
     <div class="bg-white p-8 rounded shadow-md text-center">
-        <h1 class="text-2xl font-bold mb-4">Welcome to the Home Page</h1>
-        {% with messages = get_flashed_messages() %}
+        <h1 class="text-2xl font-bold mb-4">Login</h1>
+        <form action="{{ url_for('login') }}" method="post" class="space-y-4">
+            <input type="text" name="username" class="w-full p-2 border border-gray-300 rounded" placeholder="Username"
+                required>
+            <input type="password" name="password" class="w-full p-2 border border-gray-300 rounded"
+                placeholder="Password" required>
+            <input type="submit" value="Login" class="w-full px-4 py-2 bg-green-500 text-white rounded cursor-pointer">
+        </form>
+        {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-        <div class="mb-4 space-y-2">
-            {% for message in messages %}
+        <div class="mt-4 space-y-2">
+            {% for category, message in messages %}
             <div
-                class="{% if 'success' in message %}bg-green-200 text-green-700{% else %}bg-red-200 text-red-700{% endif %} p-2 rounded">
+                class="{% if category == 'success' %}bg-green-200 text-green-700{% else %}bg-red-200 text-red-700{% endif %} p-2 rounded">
                 {{ message }}</div>
             {% endfor %}
         </div>
         {% endif %}
         {% endwith %}
-        {% if 'username' in session %}
-        <p class="text-lg mb-4">Hello, {{ session['username'] }}!</p>
-        {% else %}
-        <p class="text-lg mb-4">Please log in or sign up.</p>
-        {% endif %}
-        <div class="flex space-x-8">
-            <button onclick="showForm('shorten')" class="button">Shorten URL</button>
-            <button onclick="showForm('qr')" class="button">Generate QR Code</button>
-        </div>
-        <div id="shorten-form" class="mt-8 hidden">
-            <form action="{{ url_for('shorten_url') }}" method="post">
-                <input type="text" name="long_url" class="w-full p-2 border border-gray-300 rounded mb-4"
-                    placeholder="Enter URL to shorten" required>
-                <input type="submit" value="Shorten URL"
-                    class="px-4 py-2 bg-green-500 text-white rounded cursor-pointer">
-            </form>
-        </div>
-        <div id="qr-form" class="mt-8 hidden">
-            <form action="{{ url_for('generate_qr') }}" method="post">
-                <input type="text" name="qr_url" class="w-full p-2 border border-gray-300 rounded mb-4"
-                    placeholder="Enter URL to generate QR code" required>
-                <input type="submit" value="Generate QR Code"
-                    class="px-4 py-2 bg-blue-500 text-white rounded cursor-pointer">
-            </form>
-        </div>
     </div>
-    <script>
-        function showForm(formType) {
-            document.getElementById('shorten-form').classList.add('hidden');
-            document.getElementById('qr-form').classList.add('hidden');
-            if (formType === 'shorten') {
-                document.getElementById('shorten-form').classList.remove('hidden');
-            } else if (formType === 'qr') {
-                document.getElementById('qr-form').classList.remove('hidden');
-            }
-        }
-    </script>
 </body>
 
 </html>
