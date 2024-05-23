@@ -6,9 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home Page</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .hidden {
+            display: none;
+        }
+
+        .button {
+            padding: 20px 40px;
+            font-size: 1.25rem;
+            border: 2px solid #3490dc;
+            border-radius: 10px;
+            background-color: white;
+            color: #3490dc;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .button:hover {
+            background-color: #3490dc;
+            color: white;
+        }
+    </style>
 </head>
 
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
     <div class="absolute top-4 right-4 space-x-2">
         {% if 'username' in session %}
         <a href="{{ url_for('logout') }}"><button class="px-4 py-2 bg-red-500 text-white rounded">Logout</button></a>
@@ -21,20 +42,13 @@
         <h1 class="text-2xl font-bold mb-4">Welcome to the Home Page</h1>
         {% with messages = get_flashed_messages() %}
         {% if messages %}
-        <div class="mb-4 space-y-2">
+        <div id="message" class="mb-4 space-y-2">
             {% for message in messages %}
-            {% if 'Shortened URL: ' in message %}
-            <div class="bg-green-200 text-green-700 p-2 rounded">{{ message }}</div>
-            {% else %}
-            <div class="bg-red-200 text-red-700 p-2 rounded">{{ message }}</div>
-            {% endif %}
+            <div
+                class="{% if 'success' in message %}bg-green-200 text-green-700{% else %}bg-red-200 text-red-700{% endif %} p-2 rounded">
+                {{ message }}</div>
             {% endfor %}
         </div>
-        {% for message in messages %}
-        {% if 'Shortened URL: ' in message %}
-        <input type="hidden" id="short-url-message" value="{{ message.split('Shortened URL: ')[1] }}">
-        {% endif %}
-        {% endfor %}
         {% endif %}
         {% endwith %}
         {% if 'username' in session %}
@@ -42,44 +56,53 @@
         {% else %}
         <p class="text-lg mb-4">Please log in or sign up.</p>
         {% endif %}
-        <div class="mt-4">
+        <div class="flex space-x-8">
+            <button onclick="showForm('shorten')" class="button">Shorten URL</button>
+            <button onclick="showForm('qr')" class="button">Generate QR Code</button>
+        </div>
+        <div id="shorten-form" class="mt-8 hidden">
             <form action="{{ url_for('shorten_url') }}" method="post">
                 <input type="text" name="long_url" class="w-full p-2 border border-gray-300 rounded mb-4"
-                    placeholder="Enter URL" required>
+                    placeholder="Enter URL to shorten" required>
                 <input type="submit" value="Shorten URL"
                     class="px-4 py-2 bg-green-500 text-white rounded cursor-pointer">
             </form>
         </div>
-        <div id="short-url-container" class="mt-4 hidden">
-            <input type="text" id="short-url" class="w-full p-2 border border-gray-300 rounded mb-4" readonly>
-            <button onclick="copyToClipboard()" class="px-4 py-2 bg-blue-500 text-white rounded cursor-pointer">Copy
-                Shortened URL</button>
-            <p id="copy-message" class="mt-2 text-green-500 hidden">URL copied to clipboard!</p>
+        <div id="qr-form" class="mt-8 hidden">
+            <form action="{{ url_for('generate_qr') }}" method="post">
+                <input type="text" name="qr_url" class="w-full p-2 border border-gray-300 rounded mb-4"
+                    placeholder="Enter URL to generate QR code" required>
+                <input type="submit" value="Generate QR Code"
+                    class="px-4 py-2 bg-blue-500 text-white rounded cursor-pointer">
+            </form>
         </div>
+        {% if qr_code %}
+        <div id="qr-code" class="mt-8 flex justify-center">
+            <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code">
+        </div>
+        {% endif %}
     </div>
     <script>
-        function copyToClipboard() {
-            var copyText = document.getElementById("short-url");
-            copyText.select();
-            copyText.setSelectionRange(0, 99999); // For mobile devices
-            document.execCommand("copy");
+        function showForm(formType) {
+            var shortenForm = document.getElementById('shorten-form');
+            var qrForm = document.getElementById('qr-form');
+            var qrCode = document.getElementById('qr-code');
+            var message = document.getElementById('message');
 
-            var copyMessage = document.getElementById("copy-message");
-            copyMessage.classList.remove("hidden");
-        }
+            // Hide both forms and results initially
+            shortenForm.style.display = 'none';
+            qrForm.style.display = 'none';
+            if (qrCode) qrCode.style.display = 'none';
+            if (message) message.style.display = 'none';
 
-        function displayShortUrl(url) {
-            var shortUrlContainer = document.getElementById("short-url-container");
-            var shortUrlInput = document.getElementById("short-url");
-
-            shortUrlInput.value = url;
-            shortUrlContainer.classList.remove("hidden");
-        }
-
-        window.onload = function () {
-            var shortUrlMessage = document.getElementById("short-url-message");
-            if (shortUrlMessage) {
-                displayShortUrl(shortUrlMessage.value);
+            // Depending on the button clicked, show the corresponding form and hide the result
+            if (formType === 'shorten') {
+                shortenForm.style.display = 'block';
+                if (message) message.style.display = 'none';
+            }
+            if (formType === 'qr') {
+                qrForm.style.display = 'block';
+                if (qrCode) qrCode.style.display = 'none';
             }
         }
     </script>
