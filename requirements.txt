@@ -1,0 +1,4 @@
+Flask
+gunicorn
+qrcode==7.3.1
+Pillow==8.2.0
